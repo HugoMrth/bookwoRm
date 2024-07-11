@@ -18,8 +18,8 @@ library(shinybusy)
 library(shinyBS)
 
 # Other packages
-library(dplyr)
-
+library(tidyverse)
+library(lazyMe)
 
 
 
@@ -41,7 +41,7 @@ library(dplyr)
 server <- function(input, output, session) {
   # Reactive values
   values <- reactiveValues(
-    x = faithful[, 2]
+    data = tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))
   )
 
   # Server functions
@@ -67,14 +67,14 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       # tabs
-      menuItem("Dashboard", tabName = "dashboard",
-               icon = icon("dashboard")),
-      menuItem("Achievments", tabName = "achievments",
-               icon = icon("th")),
-      menuItem("Record", tabName = "record",
-               icon = icon("th")),
-      menuItem("Wish List", tabName = "wishlist",
-               icon = icon("th"))
+      menuItem(h2("Dashboard"), tabName = "dashboard",
+               icon = icon("dashboard", class = "fa")),
+      menuItem(h2("Achievments"), tabName = "achievments",
+               icon = icon("trophy", class = "fa")),
+      menuItem(h2("Record"), tabName = "record",
+               icon = icon("list-ul", class = "fa")),
+      menuItem(h2("Wish List"), tabName = "wishlist",
+               icon = icon("clipboard-list", class = "fa"))
     )
   ),
 
