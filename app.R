@@ -1,8 +1,3 @@
-#
-# This is a Shiny web application template.
-# You can run the application by clicking the 'Run App' button above.
-#
-
 
 
 
@@ -41,11 +36,15 @@ library(lazyMe)
 server <- function(input, output, session) {
   # Reactive values
   values <- reactiveValues(
-    data = tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))
+    data = tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx")),
+    selectedGenre1 = "All",
+    selectedGenre2 = "All"
   )
 
   # Server functions
   dashboardServer("dashboard", values)
+  genraServer("genra", values)
+  authorsServer("authors", values)
   achievmentsServer("achievments", values)
   recordServer("record", values)
   wishlistServer("wishlist", values)
@@ -69,6 +68,10 @@ ui <- dashboardPage(
       # tabs
       menuItem(h2("Dashboard"), tabName = "dashboard",
                icon = icon("dashboard", class = "fa")),
+      menuItem(h2("Genra"), tabName = "genra",
+               icon = icon("book", class = "fa")),
+      menuItem(h2("Authors"), tabName = "authors",
+               icon = icon("image-portrait", class = "fa")),
       menuItem(h2("Achievments"), tabName = "achievments",
                icon = icon("trophy", class = "fa")),
       menuItem(h2("Record"), tabName = "record",
@@ -92,13 +95,14 @@ ui <- dashboardPage(
     # Tabs body
     tabItems(
       tabItem(tabName = "dashboard", fluidPage(dashboardUi("dashboard"))),
+      tabItem(tabName = "genra", fluidPage(genraUi("genra"))),
+      tabItem(tabName = "authors", fluidPage(authorsUi("authors"))),
       tabItem(tabName = "achievments", fluidPage(achievmentsUi("achievments"))),
       tabItem(tabName = "record", fluidPage(recordUi("record"))),
       tabItem(tabName = "wishlist", fluidPage(wishlistUi("wishlist")))
     )
   )
 )
-
 
 
 

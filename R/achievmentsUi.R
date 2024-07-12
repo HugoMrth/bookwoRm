@@ -1,7 +1,6 @@
 achievmentsUi <- function(id) {
   ns <- NS(id)
   tagList(
-    # First row of boxes
     # Counting the number of checks in the references lists
         fluidRow(
           column(width = 4,
@@ -29,6 +28,44 @@ achievmentsUi <- function(id) {
           column(width = 4,
                  box(title = h1("Bibliothèque Idéale"), width = NULL, solidHeader = TRUE, status = "success",
                      h3(textOutput(ns("nChecksBI"))))
+          )
+        ),
+        # Recap text
+        fluidRow(
+          column(width = 2,
+                 uiOutput(ns("achievmentsGenreSelect"))
+          ),
+          column(width = 10,
+                 h1(htmlOutput(ns("recapText")))
+          )
+        ),
+        # Counting the number of prices in the corresponding column
+        fluidRow(br(),
+          column(width = 4,
+                 box(title = h1("Hugo"), width = NULL, solidHeader = TRUE, status = "success",
+                     h3(textOutput(ns("nPriceHugo"))))
+          ),
+          column(width = 4,
+                 box(title = h1("Pulitzer"), width = NULL, solidHeader = TRUE, status = "primary",
+                     h3(textOutput(ns("nPricePulitzer"))))
+          ),
+          column(width = 4,
+                 box(title = h1("Goncourt"), width = NULL, solidHeader = TRUE, status = "primary",
+                     h3(textOutput(ns("nPriceGoncourt"))))
+          )
+        ),
+        fluidRow(
+          column(width = 4,box(
+            title = h1("Whitbread"), width = NULL, solidHeader = TRUE, status = "warning",
+            h3(textOutput(ns("nPriceWhitbread"))))
+          ),
+          column(width = 4,box(
+            title = h1("Booker"), width = NULL, solidHeader = TRUE, status = "warning",
+            h3(textOutput(ns("nPriceBooker"))))
+          ),
+          column(width = 4,
+                 box(title = h1("Medicis"), width = NULL, solidHeader = TRUE, status = "success",
+                     h3(textOutput(ns("nPriceMedicis"))))
           )
         )
   )

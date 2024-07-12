@@ -46,6 +46,14 @@ tidyBooks <- function(data) {
         "Papou & Mamoune" = "Grandparents",
         "Recyclerie" = "Recycling Bookstore"
       )),
+      genre_niv1 = as.character(relevel_factor(genre_niv1, new.levels = list(
+        "Epistolaire" = "Letters",
+        "Graphique" = "Graphic",
+        "Non Fiction" = "Non Fiction",
+        "Poétique" = "Poetic",
+        "Romanesque" = "Novels",
+        "Théâtral" = "Theatre"
+      ))),
       genre_niv2_group = as.character(relevel_factor(genre_niv2, new.levels = list(
         "Lettres" = "Letters",
         "Bande Déssinée" = "Comics",
