@@ -1,0 +1,754 @@
+---
+title: "Reading Report"
+author: "Hugo Marthinet"
+date: "24/08/2022"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_collapsed: true
+    toc_depth: 3
+    number_sections: true
+    theme: lumen
+---
+
+```{r Initialisation, echo = FALSE, include = FALSE}
+##### Reporting de lecture : Hugo Marthinet #####
+###
+
+rm(list = ls())
+
+##
+
+
+#####                      LIBRARY                        #####
+
+
+###
+library(useFull)
+library(readxl)
+library(lubridate)
+library(dplyr)
+library(knitr)
+library(DT)
+library(kableExtra)
+library(openxlsx)
+library(ggplot2)
+library(reshape2)
+library(stringr)
+library(rmarkdown)
+library(ggplot2)
+library(hrbrthemes)
+library(forcats)
+library(gridExtra)
+library(wordcloud2)
+
+
+#####       IMPORT        #####
+
+
+###### Chemin ######
+DATA_PATH <- "C:/Users/Hugo/Desktop/Livres.xlsx"
+
+
+DATA <- data.frame(openxlsx::read.xlsx(DATA_PATH, sheet = 1))
+####                TIDYING                ####
+
+#### Preselection lignes et colonnes
+DATA <- DATA[, -1]
+DATA <- DATA[!is.na(DATA[, 1]), colnames(DATA) %ni% "Commentaires"]
+
+
+#### Colnames 
+colnames(DATA) <- c("Date_Lecture", "Theme_Mois", 
+                    "Stock", "Origine",                                 
+                    "Titre", "Auteur", "Annee_Parution",                         
+                    "Genre_Litteraire", "Genre", "Sous_Genre", 
+                    "Nb_Pages", "Langue",
+                    "CNL", "ML", "MF", "GR", "BR", "BI", "Prix",                        
+                    "Note", "Detail_Sous_Genre")
+
+
+#### Types 
+vec_types <- c("Date", "Fac",
+               "Fac", "Fac",
+               "Char", "Fac", "Num", 
+               "Fac", "Fac", "Fac", 
+               "Num", "Fac",
+               "Bin", "Bin", "Bin", "Bin", "Bin", "Bin", "Fac", 
+               "Num", "Fac")
+
+DATA[, vec_types == "Fac"] <- lapply(DATA[, vec_types == "Fac"], as.factor)
+DATA[, vec_types == "Char"] <- unlist(lapply(DATA[, vec_types == "Char"], as.character))
+DATA[, vec_types == "Num"] <- lapply(DATA[, vec_types == "Num"], as.numeric)
+DATA[, vec_types == "Bin"] <- lapply(DATA[, vec_types == "Bin"], function(x) {x == "X"})
+
+
+
+#### Recoding 
+DATA$Date_Lecture <- as.Date(DATA$Date_Lecture, origin = "1900-01-01")
+DATA$Date_Lecture[1] <- DATA$Date_Lecture[2]
+```
+
+
+# L'historique
+
+## Résumé complet
+
+
+```{r General, echo=FALSE, warning=FALSE}
+GENERAL <- rbind(
+  c("Total", "Romanesque", "Non Fiction", "Dont essais", "Autres"),
+  `Nombre de pages` = c(sum(DATA$Nb_Pages), 
+    sum(DATA$Nb_Pages[DATA$Genre_Litteraire == "Romanesque"]), 
+    sum(DATA$Nb_Pages[DATA$Genre_Litteraire == "Non Fiction"]), 
+    sum(DATA$Nb_Pages[DATA$Genre == "Essai"]), 
+    sum(DATA$Nb_Pages[DATA$Genre_Litteraire != "Romanesque" & DATA$Genre_Litteraire != "Non Fiction"])),
+  `Nombre d'oeuvres` = c(nrow(DATA), 
+    sum(DATA$Genre_Litteraire == "Romanesque"), 
+    sum(DATA$Genre_Litteraire == "Non Fiction"), 
+    sum(DATA$Genre == "Essai"), 
+    sum(DATA$Genre_Litteraire != "Romanesque" & DATA$Genre_Litteraire != "Non Fiction")),
+  `Moyenne pages/mois` = c(round(mean(by(DATA$Nb_Pages, DATA$Date_Lecture, sum)[-length(unique(DATA$Date_Lecture))]), 0), "", "", "", ""),
+  `Moyenne pages/jour` = c(round(mean(by(DATA$Nb_Pages, DATA$Date_Lecture, sum)[-length(unique(DATA$Date_Lecture))])/30.5, 0), "", "", "", ""),
+  c("", "", "", "", ""),
+  c("CNL", "Modern Library", "Monde/Fnac", "Good Reads", "Big Read"),
+  Nombre = c(paste0(sum(DATA$CNL, na.rm = TRUE), "/100"),
+             paste0(sum(DATA$ML, na.rm = TRUE), "/100"),
+             paste0(sum(DATA$MF, na.rm = TRUE), "/100"),
+             paste0(sum(DATA$GR, na.rm = TRUE), "/50"),
+             paste0(sum(DATA$BR, na.rm = TRUE), "/200"))
+)
+
+kable(GENERAL, format = "pipe", padding = 4)
+```
+## Par mois
+
+```{r Serie temporelle, echo=FALSE, warning=FALSE, message = FALSE, fig.height=6, fig.width=12}
+x <- unique(DATA$Date_Lecture)
+y1 <- by(DATA$Nb_Pages, DATA$Date_Lecture, length)
+y2 <- by(DATA$Nb_Pages, DATA$Date_Lecture, sum)
+ratio <- max(y1) / max(y2)
+      
+ggplot(mapping = aes(x = x)) + 
+  geom_line(aes(y = y1/ratio),
+            color = "steelblue2", size = 1) +
+  geom_line(aes(y = y2),
+            color = "indianred1", size = 1) + 
+  
+  geom_text(mapping = aes(x = x, y = y1/ratio, 
+                          label = y1)) +
+  
+  geom_text(mapping = aes(x = x, y = y2, 
+                          label = y2)) +
+  
+  ggtitle("Historique de lecture par mois") + 
+  
+  scale_y_continuous(
+    name = "Nombre de pages",
+    sec.axis = sec_axis(trans = ~ . * ratio,
+                        name = "Nombre d'oeuvres")
+  ) +
+  scale_x_date( name = " ") + 
+  
+  theme(
+    axis.title.y = element_text(color = "indianred1"),
+    axis.title.y.right = element_text(color = "steelblue2"),
+  )
+
+```
+
+# Tous les livres
+
+## Les Genres
+
+### Genres littéraires
+
+```{r Nombre d oeuvres, echo = FALSE, include = FALSE}
+group <- levels(DATA$Genre_Litteraire)
+val1 <- round(table(DATA$Genre_Litteraire)/length(DATA$Genre_Litteraire)*100, 0)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1, fill = group)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val1, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre littéraire")) +
+  
+  theme_void() +
+  ggtitle("Répartition des genres littéraires")
+```
+
+```{r Nombre de pages2, echo = FALSE, include = FALSE}
+group <- levels(DATA$Genre_Litteraire)
+val2 <- round(by(DATA$Nb_Pages, DATA$Genre_Litteraire, sum)/sum(DATA$Nb_Pages)*100, 0)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val2, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre littéraire")) +
+  
+  theme_void() +
+  ggtitle("Volume de lecture par genre littéraire")
+```
+
+```{r Print 1, echo=FALSE, message=FALSE, fig.height=5, fig.width=12}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+```
+
+### Sous Genres
+
+```{r Nombre d oeuvres3, echo = FALSE, include = FALSE}
+X1 <- as.factor(as.character(DATA$Genre[DATA$Genre_Litteraire == "Romanesque"]))
+X1[X1 %in% c("Nouvelle", "Recueil de nouvelles")] <- "Nouvelle"
+X1[X1 %in% c("Conte", "Recueil de contes", "Recueil de séances")] <- "Conte"
+X1[X1 %in% c("Roman", "Roman Court")] <- "Roman"
+
+
+X1 <- as.factor(as.character(X1))
+group1 <- levels(X1)
+val1 <- round(table(X1)/length(X1)*100, 0)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val1, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre")) +
+  
+  theme_void() +
+  ggtitle("Répartition du genre romanesque")
+```
+
+```{r Nombre d oeuvres 4, echo = FALSE, include = FALSE}
+X2 <- as.character(DATA$Genre[DATA$Genre_Litteraire == "Non Fiction"])
+X2[X2 %in% c("Article", "Thèse")] <- "Thèses & Articles"
+X2[X2 %in% c("Pensées", "Dialogue", "Essai", "Pamphlet")] <- "Essai"
+X2[X2 %in% c("Plaidoyer")] <- "Discours"
+X2[X2 %in% c("Biographie", "Mémoire", "Autobiographie")] <- "Auto/Biographique"
+
+X2 <- as.factor(as.character(X2))
+group2 <- levels(X2)
+val2 <- round(table(X2)/length(X2)*100, 0)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group2)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val2, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre")) +
+  
+  theme_void() +
+  ggtitle("Répartition des Non-Fictions")
+```
+
+```{r Print 122, echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=12}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+```
+
+
+
+### Sous Genres détaillés
+
+```{r Nombre d oeuvres2, echo = FALSE, include = FALSE}
+X1 <- as.factor(as.character(DATA$Genre[DATA$Genre_Litteraire == "Romanesque"]))
+group1 <- levels(X1)
+val1 <- round(table(X1)/length(X1)*100, 0)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val1, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre")) +
+  
+  theme_void() +
+  ggtitle("Répartition du genre romanesque")
+```
+
+```{r Nombre d oeuvres 3, echo = FALSE, include = FALSE}
+X2 <- as.factor(as.character(DATA$Genre[DATA$Genre_Litteraire == "Non Fiction"]))
+group2 <- levels(X2)
+val2 <- round(table(X2)/length(X2)*100, 0)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group2)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val2, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Genre")) +
+  
+  theme_void() +
+  ggtitle("Répartition des Non-Fictions")
+```
+
+```{r Print 12, echo=FALSE, message=FALSE, fig.height=5, fig.width=12}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+```
+
+
+## Nombre de pages
+
+```{r, echo = FALSE, message = FALSE, fig.height=8, fig.width=12}
+Y <- c(DATA$Nb_Pages, DATA$Nb_Pages)
+X <- c(as.character(DATA$Genre_Litteraire), rep("Total", length(DATA$Genre_Litteraire)))
+X <- as.factor(as.character(X))
+
+plot1 <- ggplot(mapping = aes(y = Y, x = X)) +
+  geom_boxplot(outlier.size = 0.5,) +
+  ylab("Note") + 
+  xlab("") +
+  ggtitle("Boxplots des nombres de pages par genre littéraire") +
+  geom_text(mapping = aes(x = c(levels(DATA$Genre_Litteraire), "Total"), y = max(DATA$Nb_Pages), 
+                          label = round(c(by(DATA$Nb_Pages, DATA$Genre_Litteraire, mean), Total = mean(DATA$Nb_Pages)), 0)))
+
+plot2 <- ggplot(mapping = aes(x = DATA$Nb_Pages)) + 
+  geom_histogram(breaks = seq(0, max(DATA$Nb_Pages)+100, 100), fill = "#69b3a2", alpha = 0.9) + 
+  ggtitle("Décompte des nombres de pages par tranches de 100") + 
+  xlab("") + 
+  ylab("") 
+
+grid.arrange(plot1, plot2,
+             nrow = 2)
+```
+
+## Langue de lecture
+
+```{r Langue, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+group1 <- levels(DATA$Langue)
+val1 <- table(DATA$Langue)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1/sum(val1)*100, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = as.character(val1)), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Langue")) +
+  
+  theme_void() +
+  ggtitle("Répartition du nombre d'oeuvres par langue de lecture")
+```
+```{r Langue2, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+group2 <- levels(DATA$Langue)
+val2 <- by(DATA$Nb_Pages, DATA$Langue, sum)
+val2 <- round(val2/sum(val2)*100, 1)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = val2), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Langue")) +
+  
+  theme_void() +
+  ggtitle("Répartition du volume de lecture par langue")
+```
+
+```{r Print 422, echo=FALSE, message=FALSE, warning = FALSE, fig.height=6, fig.width=8}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+``` 
+
+## Format
+
+```{r, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+group1 <- levels(DATA$Stock)
+val1 <- table(DATA$Stock)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = as.character(val1)), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Langue")) +
+  
+  theme_void() +
+  ggtitle("Répartition du nombre d'oeuvres par format")
+```
+```{r, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+group2 <- levels(DATA$Stock)
+val2 <- by(DATA$Nb_Pages, DATA$Stock, sum)
+val2 <- round(val2/sum(val2)*100, 1)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = val2), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Langue")) +
+  
+  theme_void() +
+  ggtitle("Répartition du volume de lecture par langue")
+```
+
+```{r, echo=FALSE, message=FALSE, warning = FALSE, fig.height=6, fig.width=8}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+``` 
+
+
+## Années
+
+```{r Annees 2, echo = FALSE, include = FALSE}
+plot1 <- ggplot(mapping = aes(x = DATA$Annee_Parution)) + 
+  geom_histogram(binwidth = 5, fill = "#69b3a2", alpha = 0.9) + 
+  ggtitle("Décompte des années de parutions par tranche de 5 ans") + 
+  xlab("") + 
+  ylab("") 
+
+plot2 <- ggplot(mapping = aes(x = DATA$Annee_Parution)) + 
+  geom_histogram(binwidth = 50, fill = "#69b3a2", alpha = 0.9) + 
+  ggtitle("Décompte des années de parutions par tranche de 50 ans") + 
+  xlab("") + 
+  ylab("") 
+
+plot4 <- ggplot(mapping = aes(x = DATA$Annee_Parution[DATA$Annee_Parution >= 1800])) + 
+  geom_histogram(binwidth = 5, fill = "#69b3a2", alpha = 0.9) + 
+  ggtitle("Décompte des années de parutions par tranche de 5 ans à partir de 1800") + 
+  xlab("") + 
+  ylab("") 
+```
+
+```{r Annees groupees 2, echo = FALSE, include = FALSE}
+x <- cut(DATA$Annee_Parution, 
+         breaks = c(-Inf, 500, 1600, 1940, Inf),
+         labels = c("Antique", 
+                    "Médiéval", 
+                    "Moderne", 
+                    "Post-Moderne"))
+
+X <- levels(x)
+Y <- table(x)
+
+plot3 <- ggplot(mapping = aes(y = Y, x = X)) + 
+  geom_bar(stat = "identity", fill = "#69b3a2", alpha = 0.6, width = 0.4) + 
+  ggtitle("Décompte des périodes") + 
+  xlab("") + 
+  ylab("")
+```
+
+```{r Print 4, echo=FALSE, message=FALSE, warning = FALSE, fig.height=12, fig.width=8}
+grid.arrange(plot1, plot2, plot3, plot4,
+             nrow = 4)
+``` 
+
+
+## Notes
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height=5, fig.width=12}
+ggplot(mapping = aes(y = DATA$Note, x = DATA$Genre_Litteraire)) +
+  geom_boxplot() +
+  ylab("Note") + 
+  xlab("") +
+  ggtitle("Boxplots des notes par genre littéraire") +
+  geom_text(mapping = aes(x = levels(DATA$Genre_Litteraire), y = max(DATA$Note, na.rm = TRUE), 
+                          label = round(by(DATA$Note, DATA$Genre_Litteraire, mean, na.rm = TRUE), 1)))
+```
+
+## Distinctions
+
+```{r Prix, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+#### Pour les euvres romanesques
+#Selection de donnees
+val <- table(DATA$Prix)
+name <- names(val)
+name <- fct_reorder(name, val)
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab(" ") +
+  
+  theme_bw() +
+  ggtitle("Prix attribués aux oeuvres lues")
+```
+
+## Les re-lectures
+
+```{r relecture, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+#### Pour les euvres romanesques
+#Selection de donnees
+val <- table(DATA$Titre)
+val <- val[val > 1]
+name <- names(val)
+name <- fct_reorder(name, val)
+
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle("Livres les plus lus")
+```
+
+## Nuage de mots
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+TITRES <- DATA$Titre
+
+TITRES[27] <- "1000 Tatouages"
+TITRES[TITRES == "Animal Farm"] <- "La Ferme des Animaux"
+TITRES[TITRES == "Wuthering Heights"] <- "Les Hauts de Hurlevents"
+TITRES[TITRES == "The Old Man and the Sea"] <- "Le Vieil Homme et la Mer"
+TITRES[TITRES == "To Kill a Mockingbird"] <- "Ne tirez pas sur l'oiseau moqueur"
+TITRES[TITRES == "A Clockwork Orange"] <- "Orange Mécanique"
+TITRES[TITRES == "Pride and Prejudice"] <- "Orgueil et Préjugés"
+TITRES[TITRES == "King Arthur"] <- "Le Roi Arthur"
+TITRES[TITRES == "For Whom The Bell Tolls"] <- "Pour qui Sonne le Glas"
+TITRES[TITRES == "The Complete Short Stories"] <- "Histoire Complètes"
+TITRES[TITRES == "The Fault in our Stars"] <- "Nos Etoiles Contraires"
+TITRES[TITRES == "War and Peace"] <- "Guerre et Paix"
+TITRES[TITRES == "The Death of Ivan Ilyich"] <- "La Mort d'Ivan Ilyich"
+TITRES[TITRES == "Master and Man"] <- "aître et Serviteur"
+TITRES[TITRES == "The Circle"] <- "Le Cercle"
+TITRES[TITRES == "A Portrait of the Artist as a Young Man"] <- "Portrait de l'artiste en jeune homme"
+TITRES[TITRES == "Ulysses"] <- "Ulysse"
+TITRES[TITRES == "Midnight's Children"] <- "Les Enfants de Minuit"
+TITRES[TITRES == "A Doll's House"] <- "Une Maison de Poupées"
+TITRES[TITRES == "God and the State"] <- "Dieu et l'État"
+TITRES[TITRES == "On the Duty of Civil Disobedience"] <- "La Désobéissance civile"
+TITRES[TITRES == "A Plea for Captain John Brown"] <- "Plaidoyer pour John Brown"
+TITRES[TITRES == "Walking"] <- "De la Marche"
+TITRES[TITRES == "Walden; or, Life in the Woods"] <- "Walden, ou la Vie dans les bois"
+TITRES[TITRES == "The Problems of Philosophy"] <- "Les Problèmes de la Philosophie"
+TITRES[TITRES == "The Way of All Flesh"] <- "Ainsi va toute Chair"
+TITRES[TITRES == "Historic Doubts Relative to Napoleon Buonaparte"] <- "Doutes historiques sur Napoléon Bonaparte"
+TITRES[TITRES == "The Republic"] <- "La République"
+TITRES[TITRES == "Symbolic Logic"] <- "Logique sans Peine"
+TITRES[TITRES == "The Grapes of Wrath"] <- "Les Raisins de la Colère"
+
+wordFreq <- tolower(paste(TITRES, collapse = " "))
+wordFreq <- stringr::str_replace_all(wordFreq, "\\?|\\(|\\)|,", "")
+wordFreq <- stringr::str_replace_all(wordFreq, "'", " ")
+wordFreq <- stringr::str_replace_all(wordFreq, "\\.\\.\\.", " ")
+wordFreq <- stringr::str_replace_all(wordFreq, " l | le | la | the | de | des | aux | les | j | in | our | d | and | à | un | du | i | ii | iii | a | to | & | et | sur | of | une | for | que | le | iii | est-il | ou | do | whom | when | au | dans | ainsi | qui ", " ")
+wordFreq <- stringr::str_replace_all(wordFreq, " l | le | la | the | de | des | aux | les | j | in | our | d | and | à | un | du | i | ii | iii | a | to | & | et | sur | of | une | for | que | le | iii | est-il | ou | do | whom | when | au | dans | ainsi | qui ", " ")
+wordFreq <- stringr::str_replace_all(wordFreq, " l | le | la | the | de | des | aux | les | j | in | our | d | and | à | un | du | i | ii | iii | a | to | & | et | sur | of | une | for | que | le | iii | est-il | ou | do | whom | when | au | dans | ainsi | qui ", " ")
+
+
+
+
+wordFreq <- as.vector(str_split(wordFreq, " "))[[1]]
+wordFreq <- table(wordFreq)
+wordFreq2 <- data.frame(
+  word = names(wordFreq),
+  freq = as.vector(wordFreq)
+  )
+# or a vector of colors. vector must be same length than input data
+wordcloud2(wordFreq2[wordFreq2$freq > 1, ], size=1.6, color=rep_len( c("green","blue"), nrow(demoFreq) ) )
+```
+
+
+## Acquisition
+
+
+```{r Origine, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+group1 <- levels(DATA$Origine)
+val1 <- round(table(DATA$Origine)/length(DATA$Origine)*100, 0)
+
+plot1 <- ggplot(mapping = aes(x = "", y = val1, fill = group1)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val1, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Origine")) +
+  
+  theme_void() +
+  ggtitle("Répartition des origines des livres")
+```
+
+```{r Origine2, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+X <- as.character(DATA$Origine)
+X[X %in% c("Amazon", "Fnac", "Recyclerie", "Librairie")] <- "Achat"
+X[X %in% c("Gutenberg", "epubBooks")] <- "Site"
+X[X %in% c("Enfance", "Papou & Mamoune")] <- "Maman"
+
+X <- as.factor(X)
+
+group2 <- levels(X)
+val2 <- round(table(X)/length(X)*100, 0)
+
+plot2 <- ggplot(mapping = aes(x = "", y = val2, fill = group2)) +
+  geom_bar(stat = "identity", width = 1) + 
+  geom_text(aes(label = paste0(val2, "%")), 
+            position = position_stack(vjust = 0.5)) +
+  coord_polar("y", start = 0) +
+  
+  scale_fill_brewer(palette = "Pastel1") +
+  guides(fill = guide_legend(title = "Origine")) +
+  
+  theme_void() +
+  ggtitle("Après recodage")
+```
+
+```{r Print 55, echo=FALSE, message=FALSE, fig.height=5, fig.width=12}
+grid.arrange(plot1, plot2,
+             nrow = 1)
+```
+
+# Les Fictions
+
+## Sous-genres principaux
+
+```{r echo=FALSE, fig.height=8, fig.width=12, message=FALSE}
+#### Pour les euvres romanesques
+#Selection de donnees
+DATA_inter <- DATA[DATA$Genre_Litteraire == "Romanesque",]
+DATA_inter$Sous_Genre <- as.factor(as.character(DATA_inter$Sous_Genre))
+#Calcul des valeurs
+val <- sort(table(DATA_inter$Sous_Genre), decreasing = TRUE)[1:15]
+val2 <- sort(table(unlist(str_split(DATA_inter$Detail_Sous_Genre, ", "))), decreasing = TRUE)[1:15]
+name <- names(val)
+name <- fct_reorder(name, val)
+name2 <- names(val2)
+name2 <- fct_reorder(name2, val2)
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle(" ")
+# 
+# plot2 <- ggplot(mapping = aes(x = name2, y = val2)) +
+#   geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+#   coord_flip() +
+#   xlab("") +
+#   
+#   theme_bw() +
+#   ggtitle(" ")
+# 
+# grid.arrange(plot1, plot2,
+#              nrow = 1)
+```
+
+## Sous-genres détaillés
+
+```{r echo=FALSE, fig.height=8, fig.width=12, message=FALSE}
+#### Pour les euvres romanesques
+#Selection de donnees
+DATA_inter <- DATA[DATA$Genre_Litteraire == "Romanesque",]
+#Calcul des valeurs
+val <- sort(table(unlist(str_split(DATA_inter$Detail_Sous_Genre, ", "))), decreasing = TRUE)[1:15]
+name <- names(val)
+name <- fct_reorder(name, val)
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle(" ")
+```
+
+
+# Les Non-Fictions
+
+## Sous-genres 
+
+```{r echo=FALSE, fig.height=8, fig.width=12, message=FALSE}
+#### Pour les euvres romanesques
+#Selection de donnees
+DATA_inter2 <- DATA[DATA$Genre_Litteraire == "Non Fiction",]
+DATA_inter2$Sous_Genre <- as.factor(as.character(DATA_inter2$Sous_Genre))
+#Calcul des valeurs
+val2 <- table(DATA_inter2$Sous_Genre)
+name2 <- as.factor(names(val2))
+name2 <- fct_reorder(name2, val2)
+
+#Graphiques
+ggplot(mapping = aes(x = name2, y = val2)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle("Décompte des thèmes des Non Fictions")
+```
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+# Les auteurs
+
+```{r Auteurs, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+#### Pour les euvres romanesques
+#Selection de donnees
+val <- table(DATA$Auteur)
+val <- val[val > 1]
+name <- names(val)
+name <- fct_reorder(name, val)
+
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle("Auteurs les plus lus (en nombre d'oeuvres")
+```
+
+```{r Auteurs2, echo = FALSE, message = FALSE, fig.height=5, fig.width=12}
+#### Pour les euvres romanesques
+#Selection de donnees
+val <- sort(by(DATA$Nb_Pages, DATA$Auteur, sum), decreasing = TRUE)[1:10]
+name <- names(val)
+name <- fct_reorder(name, val)
+
+
+#Graphiques
+ggplot(mapping = aes(x = name, y = val)) +
+  geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) + 
+  coord_flip() +
+  xlab("") +
+  
+  theme_bw() +
+  ggtitle("Auteurs les plus lus (en nombre de pages)")
+```
+
