@@ -36,9 +36,9 @@ library(lazyMe)
 server <- function(input, output, session) {
   # Reactive values
   values <- reactiveValues(
-    data = tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx")),
+    data = data.frame(tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))),
     selectedGenre1 = "All",
-    selectedGenre2 = "All"
+    selectedGenre2 = "Aggregated"
   )
 
   # Server functions

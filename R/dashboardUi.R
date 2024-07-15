@@ -1,12 +1,23 @@
 dashboardUi <- function(id) {
   ns <- NS(id)
   tagList(
-        fluidRow(
-          box(
-            title = "Box title", width = 6, status = "primary",
-            "Box content"
-          )
-        )
+    # Pie charts
+    fluidRow(
+      column(width = 2,
+             uiOutput(ns("dashboardGenre1Select"))
+      ),
+      column(width = 2,
+             uiOutput(ns("dashboardGenre2Select"))
+      )
+    ),
+    fluidRow(
+      column(width = 6,
+             plotOutput(ns("pieBooks"))
+      ),
+      column(width = 6,
+             plotOutput(ns("piePages"))
+      )
+    )
 
   )
 }
