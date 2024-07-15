@@ -35,3 +35,8 @@ devtools::install_github("HugoMrth/lazyMe")
 ## 2) Lauching the app
 
 Download and unzip the whole repository, open "app.R" and click the "Run App" button (top right corner).
+
+
+## 3) Using the app with your data
+
+As I am maintaining the dta file myself, using the app with your own reading data will require you to update the data file yourself. The easiest solution would be to respect the same data base template, but modifying the "R/dataTidying.R" file to fit the format can also work. 
