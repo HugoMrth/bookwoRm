@@ -12,7 +12,7 @@ achievmentsServer <- function(id, values) {
       # Whenever inpoutis changes
       observeEvent(input$achievmentsGenre, {
         isolate(
-          values$selectedGenre1 <- input$achievmentsGenre
+          values$genre <- input$achievmentsGenre
         )
       })
 
@@ -22,10 +22,9 @@ achievmentsServer <- function(id, values) {
       # For the text display
       output$achievmentsGenreSelect <- renderUI({
         ns <- session$ns
-        genreList <- c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE)))
         selectInput(ns("achievmentsGenre"), "Genre :",
-                    choices = genreList,
-                    selected = values$selectedGenre1)
+                    choices = c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE))),
+                    selected = values$genre)
       })
 
       #### Counting the checks ####
@@ -64,7 +63,7 @@ achievmentsServer <- function(id, values) {
       #### Recap text ####
       output$recapText <- renderUI({
         # Placeholder calculation for the text
-        placeHolder <- switch(values$selectedGenre1,
+        placeHolder <- switch(values$genre,
                               All = "writings",,
                               Letters = "epistolary writings",
                               Graphic = "comics",
@@ -73,18 +72,18 @@ achievmentsServer <- function(id, values) {
                               Novels = "novel like writings",
                               Theatre = "plays")
 
-        nPages <- ifelse(values$selectedGenre1 == "All",
-                         sum(values$data$nb_pages),
-                         sum(values$data$nb_pages[values$data$genre_niv1 == values$selectedGenre1]))
-        nRead <- ifelse(values$selectedGenre1 == "All",
+        nPages <- ifelse(values$genre == "All",
+                         sum(values$data$n_pages),
+                         sum(values$data$n_pages[values$data$genre_niv1 == values$genre]))
+        nRead <- ifelse(values$genre == "All",
                          nrow(values$data),
-                         nrow(values$data[values$data$genre_niv1 == values$selectedGenre1, ]))
-        nBooks <- ifelse(values$selectedGenre1 == "All",
+                         nrow(values$data[values$data$genre_niv1 == values$genre, ]))
+        nBooks <- ifelse(values$genre == "All",
                         length(unique(values$data$id)),
-                        length(unique(values$data$id[values$data$genre_niv1 == values$selectedGenre1])))
-        nMonths <- ifelse(values$selectedGenre1 == "All",
-                          length(unique(values$data$date_lecture)),
-                          length(unique(values$data$date_lecture[values$data$genre_niv1 == values$selectedGenre1])))
+                        length(unique(values$data$id[values$data$genre_niv1 == values$genre])))
+        nMonths <- ifelse(values$genre == "All",
+                          length(unique(values$data$readDate)),
+                          length(unique(values$data$readDate[values$data$genre_niv1 == values$genre])))
         nPagesMonth <- prettyNum(floor(nPages / nMonths), big.mark = ",")
         nPagesDay <- prettyNum(floor(nPages / nMonths / (365.25/12)), big.mark = ",")
         nPagesBook <- prettyNum(floor(nPages / nBooks), big.mark = ",")

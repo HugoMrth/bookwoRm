@@ -1,6 +1,5 @@
 
 
-
 #### IMPORTS ####
 
 # Shiny packages
@@ -34,16 +33,21 @@ library(lazyMe)
 #### SERVER ####
 
 server <- function(input, output, session) {
+  DATA <- tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))
+
   # Reactive values
   values <- reactiveValues(
-    data = data.frame(tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))),
-    selectedGenre1 = "All",
-    selectedGenre2 = "Aggregated"
+    data = DATA,
+    startDate = min(DATA$readDate),
+    endDate = max(DATA$readDate),
+    genre = "All",
+    genreType = "Aggregated",
+    unit = "Books"
   )
 
   # Server functions
   dashboardServer("dashboard", values)
-  genraServer("genra", values)
+  booksServer("books", values)
   authorsServer("authors", values)
   achievmentsServer("achievments", values)
   recordServer("record", values)
@@ -68,7 +72,7 @@ ui <- dashboardPage(
       # tabs
       menuItem(h2("Dashboard"), tabName = "dashboard",
                icon = icon("dashboard", class = "fa")),
-      menuItem(h2("Genra"), tabName = "genra",
+      menuItem(h2("Books"), tabName = "books",
                icon = icon("book", class = "fa")),
       menuItem(h2("Authors"), tabName = "authors",
                icon = icon("image-portrait", class = "fa")),
@@ -83,11 +87,18 @@ ui <- dashboardPage(
 
   # Body
   dashboardBody(
+
+    # Background color
+    tags$head(tags$style(HTML('
+      .content-wrapper {
+        background-color: #fff;
+      }'
+    ))),
+
     # Loading spinner
     useShinyjs(),
-    #add_busy_spinner(spin = "fading-circle"),
 
-    # CSS style
+    # CSS style sheet to use
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
     ),
@@ -95,7 +106,7 @@ ui <- dashboardPage(
     # Tabs body
     tabItems(
       tabItem(tabName = "dashboard", fluidPage(dashboardUi("dashboard"))),
-      tabItem(tabName = "genra", fluidPage(genraUi("genra"))),
+      tabItem(tabName = "books", fluidPage(booksUi("books"))),
       tabItem(tabName = "authors", fluidPage(authorsUi("authors"))),
       tabItem(tabName = "achievments", fluidPage(achievmentsUi("achievments"))),
       tabItem(tabName = "record", fluidPage(recordUi("record"))),

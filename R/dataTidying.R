@@ -1,18 +1,19 @@
 tidyBooks <- function(data) {
   # data <- openxlsx::read.xlsx("data/Livres.xlsx")
 
-  colnames(data) <- c("id", "date_lecture", "theme", "formatl", "origine_niv1",
-                       "titre", "auteur", "date_publi",
-                       "genre_niv1", "genre_niv2", "genre_niv3", "nb_pages", "langue",
+  colnames(data) <- c("id", "readDate", "theme", "formatl", "origin_niv1",
+                       "title", "author", "pubDate",
+                       "genre_niv1", "genre_niv2", "genre_niv3", "n_pages", "lang",
                        "CNL", "ML", "MF", "GR", "BR", "BI", "prix",
                        "note", "genre_detail", "comm")
 
   data <- data %>%
     dplyr::select(-theme, -comm) %>%
     mutate(
-      date_lecture = as.Date(date_lecture, origin = "1899-12-30"),
+      readDate = as.Date(readDate, origin = "1899-12-30"),
+      pubDate = as.Date(pubDate, origin = "1899-12-30"),
       formatl = relevel_factor(formatl, new.levels = list("Physique" = "Physical", "Epub" = "Epub")),
-      origine_group = relevel_factor(origine_niv1, new.levels = list(
+      origin_group = relevel_factor(origin_niv1, new.levels = list(
         "Amazon" = "Online Bookstore",
         "Anna's Archive" = "Web Scraping",
         "Arnaud" = "Friends & Family",
@@ -29,7 +30,7 @@ tidyBooks <- function(data) {
         "Papou & Mamoune" = "Friends & Family",
         "Recyclerie" = "Offline Bookstore"
       )),
-      origine_niv1 = relevel_factor(origine_niv1, new.levels = list(
+      origin_niv1 = relevel_factor(origin_niv1, new.levels = list(
         "Amazon" = "Amazon",
         "Anna's Archive" = "Anna's Archive",
         "Arnaud" = "Arnaud",
@@ -117,6 +118,6 @@ tidyBooks <- function(data) {
         "Dialogue" = "Dialogues",
         "Pensées" = "Thoughts"
       ))),
-      langue = relevel_factor(langue, new.levels = list("Français" = "French", "Anglais" = "English"))
+      lang = relevel_factor(lang, new.levels = list("Français" = "French", "Anglais" = "English"))
       )
 }

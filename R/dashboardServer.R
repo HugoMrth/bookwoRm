@@ -7,39 +7,103 @@ dashboardServer <- function(id, values) {
 
       #### ObserveEvents ####
 
-      # Updates reactive values
-      # For the text display
-      # Whenever inpoutis changes
-      observeEvent(input$dashboardGenre1, {
+      # Updates reactive values whenever inpout is changed
+      # Those only update the reactive values, no other function
+      observeEvent(input$dashboardDateRange, {
+        values$startDate <- as.Date(input$dashboardDateRange[1])
+        values$endDate <- as.Date(input$dashboardDateRange[2])
+      })
+      observeEvent(input$dashboardGenre, {
         isolate(
-          values$selectedGenre1 <- input$dashboardGenre1
+          values$genre <- input$dashboardGenre
         )
       })
-      observeEvent(input$dashboardGenre2, {
+      observeEvent(input$dashboardGenreType, {
         isolate(
-          values$selectedGenre2 <- input$dashboardGenre2
+          values$genreType <- input$dashboardGenreType
+        )
+      })
+      observeEvent(input$dashboardUnit, {
+        isolate(
+          values$unit <- input$dashboardUnit
         )
       })
 
 
       #### renderUI ####
 
-      # Select input
-      # For the pie chart
-      output$dashboardGenre1Select <- renderUI({
+      # Date inputs
+      output$dashboardDateRangeSelect <- renderUI({ # double time input to set the time serie selection
         ns <- session$ns
-        genreList <- c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE)))
-        selectInput(ns("dashboardGenre1"), "Genre :",
-                    choices = genreList,
-                    selected = values$selectedGenre1)
+        dateRangeInput(ns("dashboardDateRange"), "Time period :",
+                       start = values$startDate,
+                       end = values$endDate,
+                       min = min(values$data$readDate),
+                       max = max(values$data$readDate),
+                       format = "yyyy-mm", # only interested in a monthly time span
+                       startview = "year")
       })
-      output$dashboardGenre2Select <- renderUI({
-        ns <- session$ns
-        genreList <- c("Aggregated", "Detailed")
 
-        selectInput(ns("dashboardGenre2"), "Sub-genre :",
-                    choices = genreList,
-                    selected = values$selectedGenre2)
+      # Select inputs for the pie chart
+      output$dashboardGenreSelect <- renderUI({ # Genre list
+        ns <- session$ns
+        selectInput(ns("dashboardGenre"), "Genre :",
+                    choices = c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE))),
+                    selected = values$genre)
+      })
+      output$dashboardGenreTypeSelect <- renderUI({ # which genre columns to use
+        ns <- session$ns
+        selectInput(ns("dashboardGenreType"), "Sub-genre :",
+                    choices = c("Aggregated", "Detailed"),
+                    selected = values$genreType)
+      })
+      output$dashboardUnitSelect <- renderUI({ # whether to simply count the rows, or use the number of pages
+        ns <- session$ns
+        selectInput(ns("dashboardUnit"), "Unit :",
+                    choices = c("Books", "Pages"),
+                    selected = values$unit)
+      })
+
+
+
+
+
+      #### Time serie ####
+      output$timeSeriePlot <- renderPlot({
+        # Time period trimming
+        plotData <- periodSelection(values)
+
+        x <- unique(values$data$readDate)
+        y1 <- by(values$data$n_pages, values$data$readDate, length)
+        y2 <- by(values$data$n_pages, values$data$readDate, sum)
+        ratio <- max(y1) / max(y2)
+
+        # plot
+        ggplot(mapping = aes(x = x)) +
+          geom_line(aes(y = y1/ratio),
+                    color = "steelblue2", size = 1) +
+          geom_line(aes(y = y2),
+                    color = "indianred1", size = 1) +
+
+          geom_text(mapping = aes(x = x, y = y1/ratio,
+                                  label = y1)) +
+
+          geom_text(mapping = aes(x = x, y = y2,
+                                  label = y2)) +
+
+          ggtitle("Monthly readings") +
+
+          scale_y_continuous(
+            name = "Number of pages",
+            sec.axis = sec_axis(trans = ~ . * ratio,
+                                name = "Number of books")
+          ) +
+          scale_x_date( name = " ") +
+
+          theme(
+            axis.title.y = element_text(color = "indianred1"),
+            axis.title.y.right = element_text(color = "steelblue2"),
+          )
       })
 
 
@@ -47,68 +111,69 @@ dashboardServer <- function(id, values) {
 
       #### Pie Charts ####
 
-      # Number of books
-      output$pieBooks <- renderPlot({
-        # Variable selection
-        if(values$selectedGenre1 == "All" & values$selectedGenre2 == "Aggregated") plotData <- values$data$genre_niv1
-        if(values$selectedGenre1 == "All" & values$selectedGenre2 != "Aggregated") plotData <- values$data$genre_niv2
-        if(values$selectedGenre1 != "All" & values$selectedGenre2 == "Aggregated") plotData <- values$data$genre_niv2_group[values$data$genre_niv1 == values$selectedGenre1]
-        if(values$selectedGenre1 != "All" & values$selectedGenre2 != "Aggregated") plotData <- values$data$genre_niv2[values$data$genre_niv1 == values$selectedGenre1]
+      # Number of books/pages per genre
+      output$pieGenre <- renderPlot({
+        # Time period trimming
+        plotData <- periodSelection(values)
 
+        # Variable selection depending on the unit
+        if (values$unit == "Books") {
+          if(values$genre == "All" & values$genreType == "Aggregated") plotData <- plotData$genre_niv1 # genre selection
+          if(values$genre == "All" & values$genreType != "Aggregated") plotData <- plotData$genre_niv2 # sub-genre selection
+          # aggregated sub-genre selection with according genre
+          if(values$genre != "All" & values$genreType == "Aggregated") plotData <- plotData$genre_niv2_group[plotData$genre_niv1 == values$genre]
+          # detailed sub-genre selection with according genre
+          if(values$genre != "All" & values$genreType != "Aggregated") plotData <- plotData$genre_niv2[plotData$genre_niv1 == values$genre]
 
-        # Data
-        group <- names(sort(table(plotData), decreasing = TRUE))
-        val <- round(sort(table(plotData), decreasing = TRUE)/length(plotData)*100, 0)
-        label <- paste0(val, "%")
-        label[val < 5] <- ""
+          # Data
+          group <- names(sort(table(plotData), decreasing = TRUE))
+          val <- round(sort(table(plotData), decreasing = TRUE)/length(plotData)*100, 0)
+        } else {
+          # Variable selection
+          # Same as above, but adding number of pages
+          if(values$genre == "All" & values$genreType == "Aggregated") plotData <- plotData[, c("genre_niv1", "n_pages")]
+          if(values$genre == "All" & values$genreType != "Aggregated") plotData <- plotData[, c("genre_niv2", "n_pages")]
+          if(values$genre != "All" & values$genreType == "Aggregated") plotData <- plotData[plotData$genre_niv1 == values$genre,
+                                                                                            c("genre_niv2_group", "n_pages")]
+          if(values$genre != "All" & values$genreType != "Aggregated") plotData <- plotData[plotData$genre_niv1 == values$genre,
+                                                                                            c("genre_niv2", "n_pages")]
 
+          # Data
+          group <- names(table(plotData[, 1]))
+          val <- round(by(plotData$n_pages, plotData[, 1], sum)/sum(plotData$n_pages)*100, 0) # sum of the pages instead of only counting the rows
+        }
 
-        ggplot(mapping = aes(x = "", y = val, fill = group)) +
-          geom_bar(stat = "identity", width = 1) +
-          geom_text(aes(label = label),
-                    position = position_stack(vjust = 0.5)) +
-          coord_polar("y", start = 0) +
-
-          scale_fill_brewer(palette = "Pastel1") +
-          guides(fill = guide_legend(title = "Genre")) +
-
-          theme_void() +
-          ggtitle("Books")
+        # plot
+        myPieChart(val, group, values)
       })
 
 
 
-      # Number of pages
-      output$piePages <- renderPlot({
-        # Variable selection
-        if(values$selectedGenre1 == "All" & values$selectedGenre2 == "Aggregated") plotData <- values$data[, c("genre_niv1", "nb_pages")]
-        if(values$selectedGenre1 == "All" & values$selectedGenre2 != "Aggregated") plotData <- values$data[, c("genre_niv2", "nb_pages")]
-        if(values$selectedGenre1 != "All" & values$selectedGenre2 == "Aggregated") plotData <- values$data[values$data$genre_niv1 == values$selectedGenre1,
-                                                                                                           c("genre_niv2_group", "nb_pages")]
-        if(values$selectedGenre1 != "All" & values$selectedGenre2 != "Aggregated") plotData <- values$data[values$data$genre_niv1 == values$selectedGenre1,
-                                                                                                           c("genre_niv2", "nb_pages")]
+      # Number of books/pages per language
+      output$pieLang <- renderPlot({
+        # Time period trimming
+        plotData <- periodSelection(values)
 
-        # Data
-        group <- names(table(plotData[, 1]))
-        val <- round(by(plotData$nb_pages, plotData[, 1], sum)/sum(plotData$nb_pages)*100, 0)
-        label <- paste0(val, "%")
-        label[val < 5] <- ""
+        # Variable selection depending on the unit
+        switch(values$unit,
+               Books = {
+                 ifelse(values$genre == "All", # filtering if a specific genre is selected
+                        plotData <- plotData$lang,
+                        plotData <- plotData$lang[plotData$genre_niv1 == values$genre])
+                 group <- names(sort(table(plotData), decreasing = TRUE))
+                 val <- round(sort(table(plotData), decreasing = TRUE)/length(plotData)*100, 0)
+               },
+               Pages = {
+                 ifelse(values$genre == "All", # same as above, but adding de number of pages
+                        plotData <- plotData[, c("lang", "n_pages")],
+                        plotData <- plotData[, c("lang", "n_pages")][plotData$genre_niv1 == values$genre, ])
+                 group <- names(table(plotData$lang))
+                 val <- round(by(plotData$n_pages, plotData$lang, sum)/sum(plotData$n_pages)*100, 0) # sum of the pages instead of only counting the rows
+               }
+               )
 
-
-        ggplot(mapping = aes(x = "", y = val, fill = group)) +
-          geom_bar(stat = "identity", width = 1) +
-          geom_text(aes(label = label),
-                    position = position_stack(vjust = 0.5)) +
-          coord_polar("y", start = 0) +
-
-          scale_fill_brewer(palette = "Pastel1") +
-          guides(fill = guide_legend(title = "Genre")) +
-
-          theme_void() +
-          ggtitle("Pages")
+        # plot
+        myPieChart(val, group, values)
       })
-
-
-    })
-
-}
+    }
+)}
