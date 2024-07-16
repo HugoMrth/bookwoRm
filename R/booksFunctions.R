@@ -1,3 +1,0 @@
-myHistogram <- function(x, bin) {
-
-}
