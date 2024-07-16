@@ -117,6 +117,7 @@ tidyBooks <- function(data) {
         "Dialogue" = "Dialogues",
         "Pensées" = "Thoughts"
       ))),
-      lang = relevel_factor(lang, new.levels = list("Français" = "French", "Anglais" = "English"))
+      lang = relevel_factor(lang, new.levels = list("Français" = "French", "Anglais" = "English")),
+      note = as.numeric(note)
       )
 }

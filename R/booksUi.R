@@ -11,14 +11,22 @@ booksUi <- function(id) {
       ),
       column(width = 2,
              uiOutput(ns("booksBinSizePagesSelect"))
+      ),
+      column(width = 2,
+             uiOutput(ns("booksGenreSelect"))
       )
     ),
     fluidRow(
-      column(width = 6,
+      column(width = 12,
              plotOutput(ns("pubHistPlot"))
-      ),
-      column(width = 6,
+      )
+    ),
+    fluidRow(
+      column(width = 8,
              plotOutput(ns("pagesHistPlot"))
+      ),
+      column(width = 4,
+             plotOutput(ns("boxplotRatings"))
       )
     )
 

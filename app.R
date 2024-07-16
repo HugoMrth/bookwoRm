@@ -13,7 +13,7 @@ library(shinyBS)
 
 # Other packages
 library(tidyverse)
-library(lazyMe)
+library(gridExtra)
 
 
 

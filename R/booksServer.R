@@ -20,6 +20,11 @@ booksServer <- function(id, values) {
           values$binSizePages <- input$booksBinSizePages
         )
       })
+      observeEvent(input$booksGenre, {
+        isolate(
+          values$genre <- input$booksGenre
+        )
+      })
 
 
       #### renderUI ####
@@ -43,11 +48,16 @@ booksServer <- function(id, values) {
                     choices = c("10 pages", "50 pages", "100 pages", "250 pages"),
                     selected = values$binSizePages)
       })
+      output$booksGenreSelect <- renderUI({ # Genre list
+        ns <- session$ns
+        selectInput(ns("booksGenre"), "Genre :",
+                    choices = c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE))),
+                    selected = values$genre)
+      })
 
 
   #### Histograms ####
   output$pubHistPlot <- renderPlot({
-
     ggplot(mapping = aes(x = values$data$pubDate)) +
       geom_histogram(breaks = seq(values$startYear,
                                   values$endYear,
@@ -59,16 +69,47 @@ booksServer <- function(id, values) {
       ylab("Book Frequency")
   })
   output$pagesHistPlot <- renderPlot({
+    ifelse(values$genre == "All",
+           val <- values$data$n_pages[values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear],
+           val <- values$data$n_pages[values$data$genre_niv1 == values$genre &
+                                        values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear])
 
-    ggplot(mapping = aes(x = values$data$n_pages)) +
+    plot1 <- ggplot(mapping = aes(x = val)) +
       geom_histogram(breaks = seq(0,
-                                  max(values$data$n_pages) + (100 - max(values$data$n_pages) %% 100),
+                                  max(val) + (100 - max(val) %% 100),
                                   as.numeric(str_replace(values$binSizePages, " pages", ""))),
                      fill = "#69b3a2",
                      alpha = 0.9) +
       ggtitle("") +
       xlab("Number of pages") +
       ylab("Book Frequency")
+
+    plot2 <- ggplot(mapping = aes(x = val)) +
+      geom_boxplot(outlier.size = 0.5,) +
+      coord_cartesian(xlim = c(0, max(val) + (100 - max(val) %% 100))) +
+      ylab(" ") + xlab("") + ggtitle("")
+
+    grid.arrange(plot1, plot2, nrow = 2)
   })
+
+
+  #### Boxplot ####
+  output$boxplotRatings <- renderPlot({
+    ifelse(values$genre == "All",
+           val <- values$data$note[values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear],
+           val <- values$data$note[values$data$genre_niv1 == values$genre &
+                                        values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear])
+
+    ggplot(mapping = aes(y = val)) +
+      geom_boxplot(outlier.size = 0.5,) +
+      coord_cartesian(xlim = c(0, max(val) + (100 - max(val) %% 100))) +
+      ylab("Ratings") + xlab("") + ggtitle("")
+  })
+
+
     }
 )}
