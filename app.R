@@ -38,12 +38,19 @@ server <- function(input, output, session) {
   # Reactive values
   values <- reactiveValues(
     data = DATA,
+    # Values common to several tabs
+    genre = "All",
+    # Dashboard values
     startDate = min(DATA$readDate),
     endDate = max(DATA$readDate),
-    genre = "All",
     genreType = "Aggregated",
     unit = "Books",
-    langFormat = "Language"
+    langFormat = "Language",
+    # Books values
+    startYear = min(DATA$pubDate),# - (min(DATA$pubDate) %% 100),
+    endYear = max(DATA$pubDate),# + (100 - max(DATA$pubDate) %% 100),
+    binSizeYear = "50 years",
+    binSizePages = "50 pages"
   )
 
   # Server functions

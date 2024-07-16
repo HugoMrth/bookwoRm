@@ -11,7 +11,6 @@ tidyBooks <- function(data) {
     dplyr::select(-theme, -comm) %>%
     mutate(
       readDate = as.Date(readDate, origin = "1899-12-30"),
-      pubDate = as.Date(pubDate, origin = "1899-12-30"),
       formatl = relevel_factor(formatl, new.levels = list("Physique" = "Physical", "Epub" = "Epub")),
       origin_group = relevel_factor(origin_niv1, new.levels = list(
         "Amazon" = "Online Bookstore",
