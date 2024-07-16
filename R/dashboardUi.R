@@ -10,13 +10,16 @@ dashboardUi <- function(id) {
              #           "right", options = list(container = "body"))
       ),
       column(width = 2,
+             uiOutput(ns("dashboardUnitSelect"))
+      ),
+      column(width = 2,
              uiOutput(ns("dashboardGenreSelect"))
       ),
       column(width = 2,
              uiOutput(ns("dashboardGenreTypeSelect"))
       ),
       column(width = 2,
-             uiOutput(ns("dashboardUnitSelect"))
+             uiOutput(ns("dashboardLangFormatSelect"))
       )
     ),
 
@@ -35,10 +38,10 @@ dashboardUi <- function(id) {
     # Pie Charts display
     fluidRow(
       column(width = 6, align="center",
-             h3("Genre")
+             h3(htmlOutput(ns("pieTitle1")))
              ),
       column(width = 6, align="center",
-             h3("Language")
+             h3(htmlOutput(ns("pieTitle2")))
              )
     ),
     fluidRow(
@@ -46,7 +49,7 @@ dashboardUi <- function(id) {
              plotOutput(ns("pieGenre"))
       ),
       column(width = 6,
-             plotOutput(ns("pieLang"))
+             plotOutput(ns("pieLangFormat"))
       )
     )
   )

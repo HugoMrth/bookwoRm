@@ -13,6 +13,11 @@ dashboardServer <- function(id, values) {
         values$startDate <- as.Date(input$dashboardDateRange[1])
         values$endDate <- as.Date(input$dashboardDateRange[2])
       })
+      observeEvent(input$dashboardUnit, {
+        isolate(
+          values$unit <- input$dashboardUnit
+        )
+      })
       observeEvent(input$dashboardGenre, {
         isolate(
           values$genre <- input$dashboardGenre
@@ -23,9 +28,9 @@ dashboardServer <- function(id, values) {
           values$genreType <- input$dashboardGenreType
         )
       })
-      observeEvent(input$dashboardUnit, {
+      observeEvent(input$dashboardLangFormat, {
         isolate(
-          values$unit <- input$dashboardUnit
+          values$langFormat <- input$dashboardLangFormat
         )
       })
 
@@ -44,6 +49,12 @@ dashboardServer <- function(id, values) {
                        startview = "year")
       })
 
+      output$dashboardUnitSelect <- renderUI({ # whether to simply count the rows, or use the number of pages
+        ns <- session$ns
+        selectInput(ns("dashboardUnit"), "Unit :",
+                    choices = c("Books", "Pages"),
+                    selected = values$unit)
+      })
       # Select inputs for the pie chart
       output$dashboardGenreSelect <- renderUI({ # Genre list
         ns <- session$ns
@@ -57,13 +68,12 @@ dashboardServer <- function(id, values) {
                     choices = c("Aggregated", "Detailed"),
                     selected = values$genreType)
       })
-      output$dashboardUnitSelect <- renderUI({ # whether to simply count the rows, or use the number of pages
+      output$dashboardLangFormatSelect <- renderUI({ # whether to simply count the rows, or use the number of pages
         ns <- session$ns
-        selectInput(ns("dashboardUnit"), "Unit :",
-                    choices = c("Books", "Pages"),
-                    selected = values$unit)
+        selectInput(ns("dashboardLangFormat"), "Unit :",
+                    choices = c("Language", "Format"),
+                    selected = values$langFormat)
       })
-
 
 
 
@@ -111,6 +121,11 @@ dashboardServer <- function(id, values) {
 
       #### Pie Charts ####
 
+      # Title placeholder for the genre pie chart
+      output$pieTitle1 <- renderUI({
+        HTML(ifelse(values$genre == "All", "Genre", "Sub-Genre"))
+      })
+
       # Number of books/pages per genre
       output$pieGenre <- renderPlot({
         # Time period trimming
@@ -149,26 +164,34 @@ dashboardServer <- function(id, values) {
 
 
 
-      # Number of books/pages per language
-      output$pieLang <- renderPlot({
+      # Title placeholder for the language/format pie chart
+      output$pieTitle2 <- renderUI({
+        HTML(ifelse(values$langFormat == "Language", "Language", "Format"))
+      })
+
+      # Number of books/pages per language or format
+      output$pieLangFormat <- renderPlot({
         # Time period trimming
         plotData <- periodSelection(values)
+
+        # Variable selection
+        var <- ifelse(values$langFormat == "Language", "lang", "formatl")
 
         # Variable selection depending on the unit
         switch(values$unit,
                Books = {
                  ifelse(values$genre == "All", # filtering if a specific genre is selected
-                        plotData <- plotData$lang,
-                        plotData <- plotData$lang[plotData$genre_niv1 == values$genre])
+                        plotData <- plotData[, var],
+                        plotData <- plotData[, var][plotData$genre_niv1 == values$genre])
                  group <- names(sort(table(plotData), decreasing = TRUE))
                  val <- round(sort(table(plotData), decreasing = TRUE)/length(plotData)*100, 0)
                },
                Pages = {
                  ifelse(values$genre == "All", # same as above, but adding de number of pages
-                        plotData <- plotData[, c("lang", "n_pages")],
-                        plotData <- plotData[, c("lang", "n_pages")][plotData$genre_niv1 == values$genre, ])
-                 group <- names(table(plotData$lang))
-                 val <- round(by(plotData$n_pages, plotData$lang, sum)/sum(plotData$n_pages)*100, 0) # sum of the pages instead of only counting the rows
+                        plotData <- plotData[, c(var, "n_pages")],
+                        plotData <- plotData[, c(var, "n_pages")][plotData$genre_niv1 == values$genre, ])
+                 group <- names(table(plotData[, var]))
+                 val <- round(by(plotData$n_pages, plotData[, var], sum)/sum(plotData$n_pages)*100, 0) # sum of the pages instead of only counting the rows
                }
                )
 

@@ -42,7 +42,8 @@ server <- function(input, output, session) {
     endDate = max(DATA$readDate),
     genre = "All",
     genreType = "Aggregated",
-    unit = "Books"
+    unit = "Books",
+    langFormat = "Language"
   )
 
   # Server functions
