@@ -19,8 +19,9 @@ install.packages("shinyjs")
 install.packages("shinybusy")
 install.packages("shinyBS")
 # Other
-library(tidyverse)
-library(gridExtra)
+install.packages("tidyverse")
+install.packages("gridExtra")
+install.packages("forcats")
 ```
 
 ## 2) Lauching the app
