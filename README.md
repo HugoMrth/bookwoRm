@@ -5,7 +5,7 @@ This App is a dashboard similar to the ones websites like GoodReads.com propose 
 I'm maintaining my database myself and created my own dashboard :)
 
 
-## 1) Installation
+## 1) Required packages installation
 
 ```
 ### Installing packages from CRAN
@@ -19,17 +19,8 @@ install.packages("shinyjs")
 install.packages("shinybusy")
 install.packages("shinyBS")
 # Other
-install.packages("tidyverse")
-
-
-
-
-### Installing my personnal package from my github
-
-# devtools if needed  
-install.packages("devtools")
-# lazyMe
-devtools::install_github("HugoMrth/lazyMe")
+library(tidyverse)
+library(gridExtra)
 ```
 
 ## 2) Lauching the app
