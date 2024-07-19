@@ -56,7 +56,9 @@ booksServer <- function(id, values) {
       })
 
 
-  #### Histograms ####
+  #### Plots ####
+
+  # Histogram of the publication date
   output$pubHistPlot <- renderPlot({
     ggplot(mapping = aes(x = values$data$pubDate)) +
       geom_histogram(breaks = seq(values$startYear,
@@ -68,6 +70,8 @@ booksServer <- function(id, values) {
       xlab("Publication Year") +
       ylab("Book Frequency")
   })
+
+  # Histogram + Boxplot of the number of pages
   output$pagesHistPlot <- renderPlot({
     ifelse(values$genre == "All",
            val <- values$data$n_pages[values$data$pubDate >= values$startYear &
@@ -94,6 +98,22 @@ booksServer <- function(id, values) {
     grid.arrange(plot1, plot2, nrow = 2)
   })
 
+
+  # Histogram of the genra
+  output$genreHistPlot <- renderPlot({
+    ifelse(values$genre == "All",
+           val <- table(as.factor(values$data$genre_niv3[values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear])),
+           val <- table(as.factor(values$data$genre_niv3[values$data$genre_niv1 == values$genre &
+                                        values$data$pubDate >= values$startYear &
+                                        values$data$pubDate <= values$endYear])))
+
+    ggplot(mapping = aes(x = fct_reorder(as.factor(names(val)), val), y = val)) +
+      geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) +
+      coord_flip() +
+      xlab("") +
+      theme_bw()
+  })
 
   #### Boxplot ####
   output$boxplotRatings <- renderPlot({

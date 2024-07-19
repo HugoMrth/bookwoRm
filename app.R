@@ -14,7 +14,8 @@ library(shinyBS)
 # Other packages
 library(tidyverse)
 library(gridExtra)
-
+library(forcats)
+library(lazyMe)
 
 
 # Sourcing R/ folder functions

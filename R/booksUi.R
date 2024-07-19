@@ -17,7 +17,10 @@ booksUi <- function(id) {
       )
     ),
     fluidRow(
-      column(width = 12,
+      column(width = 4,
+             plotOutput(ns("genreHistPlot"))
+             ),
+      column(width = 8,
              plotOutput(ns("pubHistPlot"))
       )
     ),
