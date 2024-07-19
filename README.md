@@ -22,6 +22,10 @@ install.packages("shinyBS")
 install.packages("tidyverse")
 install.packages("gridExtra")
 install.packages("forcats")
+
+
+### Installing package from github
+remotes::install_github("HugoMrth/lazyMe)
 ```
 
 ## 2) Lauching the app
