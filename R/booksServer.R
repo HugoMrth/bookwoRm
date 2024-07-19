@@ -107,6 +107,7 @@ booksServer <- function(id, values) {
            val <- table(as.factor(values$data$genre_niv3[values$data$genre_niv1 == values$genre &
                                         values$data$pubDate >= values$startYear &
                                         values$data$pubDate <= values$endYear])))
+    val <- val[names(val) %in% names(sort(val, decreasing = TRUE)[1:10])]
 
     ggplot(mapping = aes(x = fct_reorder(as.factor(names(val)), val), y = val)) +
       geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) +
