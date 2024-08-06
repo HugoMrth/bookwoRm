@@ -76,9 +76,10 @@ dashboardServer <- function(id, values) {
       })
 
 
+      #### Outputs ####
 
 
-      #### Time serie ####
+      #### __Time serie ####
       output$timeSeriePlot <- renderPlot({
         # Time period trimming
         plotData <- periodSelection(values)
@@ -119,7 +120,7 @@ dashboardServer <- function(id, values) {
 
 
 
-      #### Pie Charts ####
+      #### __Pie Chart : Books and pages ####
 
       # Title placeholder for the genre pie chart
       output$pieTitle1 <- renderUI({
@@ -163,6 +164,8 @@ dashboardServer <- function(id, values) {
       })
 
 
+
+      #### __Pie Chart : Language ####
 
       # Title placeholder for the language/format pie chart
       output$pieTitle2 <- renderUI({
