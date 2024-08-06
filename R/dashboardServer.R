@@ -108,8 +108,8 @@ dashboardServer <- function(id, values) {
             sec.axis = sec_axis(trans = ~ . * ratio,
                                 name = "Number of books")
           ) +
-          scale_x_date( name = " ") +
-
+          scale_x_date( name = " ")  +
+          theme_minimal() +
           theme(
             axis.title.y = element_text(color = "indianred1"),
             axis.title.y.right = element_text(color = "steelblue2"),

@@ -68,7 +68,8 @@ booksServer <- function(id, values) {
                      alpha = 0.9) +
       ggtitle("") +
       xlab("Publication Year") +
-      ylab("Book Frequency")
+      ylab("Book Frequency") +
+      theme_minimal()
   })
 
   # Histogram + Boxplot of the number of pages
@@ -88,12 +89,19 @@ booksServer <- function(id, values) {
                      alpha = 0.9) +
       ggtitle("") +
       xlab("Number of pages") +
-      ylab("Book Frequency")
+      ylab("Book Frequency") +
+      theme_minimal()
 
     plot2 <- ggplot(mapping = aes(x = val)) +
       geom_boxplot(outlier.size = 0.5,) +
       coord_cartesian(xlim = c(0, max(val) + (100 - max(val) %% 100))) +
-      ylab(" ") + xlab("") + ggtitle("")
+      ylab(" ") + xlab("") + ggtitle("")  +
+      theme_minimal() +
+      theme(
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank()
+      )
 
     grid.arrange(plot1, plot2, nrow = 2)
   })
@@ -112,8 +120,9 @@ booksServer <- function(id, values) {
     ggplot(mapping = aes(x = fct_reorder(as.factor(names(val)), val), y = val)) +
       geom_bar(stat = "identity", fill = "#f68060", alpha = 0.6, width = 0.4) +
       coord_flip() +
-      xlab("") +
-      theme_bw()
+      xlab("")+
+      ylab('') +
+      theme_minimal()
   })
 
   #### Boxplot ####
@@ -127,8 +136,13 @@ booksServer <- function(id, values) {
 
     ggplot(mapping = aes(y = val)) +
       geom_boxplot(outlier.size = 0.5,) +
-      coord_cartesian(xlim = c(0, max(val) + (100 - max(val) %% 100))) +
-      ylab("Ratings") + xlab("") + ggtitle("")
+      ylab("Ratings") + xlab("") + ggtitle("") +
+      theme_minimal() +
+      theme(
+        axis.line.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank()
+      )
   })
 
 
