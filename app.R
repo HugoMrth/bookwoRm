@@ -37,10 +37,12 @@ library(DT)
 
 server <- function(input, output, session) {
   DATA <- tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))
+  WISHLIST <- tidyWishlist(openxlsx::read.xlsx("data/Livres.xlsx", sheet = 2))
 
   # Reactive values
   values <- reactiveValues(
     data = DATA,
+    wishlist = WISHLIST,
     # Values common to several tabs
     genre = "All",
     # Dashboard values

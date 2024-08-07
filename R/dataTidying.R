@@ -172,3 +172,44 @@ tidyBooks <- function(data) {
       note = as.numeric(note)
       )
 }
+
+
+
+tidyWishlist <- function(wishlist) {
+  wishlist <- wishlist[, c(1, 3:6)]
+  colnames(wishlist) <- c("State", "Title", "Author", "Genre", "Sub-Genre")
+  whishlist <- wishlist %>%
+    mutate(
+      State = as.character(relevel_factor(State, new.levels = list(
+        "A Relire" = "To Read Again",
+        "Dispo Epub" = "Available (epub)",
+        "Disponible" = "Available (physical)",
+        "Idée" = "Idea"
+      ))),
+      Genre = as.character(relevel_factor(Genre, new.levels = list(
+        "Epistolaire" = "Letters",
+        "Graphique" = "Graphic",
+        "Non Fiction" = "Non Fiction",
+        "Poésie" = "Poetic",
+        "Romanesque" = "Novels",
+        "Roman" = "Novels",
+        "Théâtral" = "Theatre",
+        "Mythologie" = "Mythology"
+      ))),
+      `Sub-Genre` = as.character(relevel_factor(`Sub-Genre`, new.levels = list(
+        "Biographie" = "Biography",
+        "Développement Personnel" = "Self Help",
+        "Essai" = "Essay",
+        "Histoire" = "History",
+        "Mythologie" = "Mythology",
+        "Pensées" = "Thoughts",
+        "Philosophie" = "Philosophy",
+        "Politique" = "Politics",
+        "Roman" = "Novel",
+        "Sciences" = "Sciences",
+        "Théâtral" = "Theatre",
+        "Traité" = "Treaty"
+      )))
+    )
+
+  }
