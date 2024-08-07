@@ -13,9 +13,11 @@ library(shinyBS)
 
 # Other packages
 library(tidyverse)
+library(stringr)
 library(gridExtra)
 library(forcats)
 library(lazyMe)
+library(DT)
 
 
 # Sourcing R/ folder functions
@@ -129,4 +131,5 @@ ui <- dashboardPage(
 #### RUN APP ####
 
 # Run the application
+options(warn=0)
 shinyApp(ui = ui, server = server)

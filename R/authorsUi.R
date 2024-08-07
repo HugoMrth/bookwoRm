@@ -5,6 +5,11 @@ authorsUi <- function(id) {
       column(width = 12,
              plotOutput(ns("authorHistPlot"))
       )
+    ),
+    fluidRow(
+      column(width = 12,
+             plotOutput(ns("pricesHistPlot"))
+      )
     )
 
   )
