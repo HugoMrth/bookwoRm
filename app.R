@@ -55,7 +55,9 @@ server <- function(input, output, session) {
     startYear = min(DATA$pubDate),# - (min(DATA$pubDate) %% 100),
     endYear = max(DATA$pubDate),# + (100 - max(DATA$pubDate) %% 100),
     binSizeYear = "50 years",
-    binSizePages = "50 pages"
+    binSizePages = "50 pages",
+    # Wishlist
+    state = "All"
   )
 
   # Server functions

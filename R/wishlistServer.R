@@ -10,6 +10,11 @@ wishlistServer <- function(id, values) {
           values$genre <- input$wishlistGenre
         )
       })
+      observeEvent(input$wishlistState, {
+        isolate(
+          values$state <- input$wishlistState
+        )
+      })
 
 
       #### renderUI ####
@@ -18,6 +23,12 @@ wishlistServer <- function(id, values) {
         selectInput(ns("wishlistGenre"), "Genre :",
                     choices = c("All", names(sort(table(values$data$genre_niv1), decreasing = TRUE)), "Mythology"),
                     selected = values$genre)
+      })
+      output$wishlistStateSelect <- renderUI({ # States list
+        ns <- session$ns
+        selectInput(ns("wishlistState"), "State :",
+                    choices = c("All", names(sort(table(values$wishlist$State), decreasing = TRUE))),
+                    selected = values$state)
       })
 
 
@@ -28,12 +39,18 @@ wishlistServer <- function(id, values) {
         ifelse(values$genre == "All",
                rowSel <- 1:nrow(values$wishlist),
                rowSel <- which(values$wishlist$Genre == values$genre))
+        res <- values$wishlist[rowSel, ]
 
-        values$wishlist[rowSel, ]
+        ifelse(values$state == "All",
+               rowSel <- 1:nrow(res),
+               rowSel <- which(res$State == values$state))
+        res <- res[rowSel, ]
+
+        res
       },
+      rownames = FALSE,
       options = list(
-        pageLength = 20,
-        initComplete = JS('function(setting, json) { alert("done"); }')
+        pageLength = 20
       )
       )
     })
