@@ -22,6 +22,9 @@ install.packages("shinyBS")
 install.packages("tidyverse")
 install.packages("gridExtra")
 install.packages("forcats")
+install.packages("stringr")
+install.packages("lazyMe")
+install.packages("DT")
 
 
 ### Installing package from github
