@@ -38,11 +38,13 @@ library(DT)
 server <- function(input, output, session) {
   DATA <- tidyBooks(openxlsx::read.xlsx("data/Livres.xlsx"))
   WISHLIST <- tidyWishlist(openxlsx::read.xlsx("data/Livres.xlsx", sheet = 2))
+  QUOTES <- tidyQuotes(openxlsx::read.xlsx("data/Citations.xlsx"))
 
   # Reactive values
   values <- reactiveValues(
     data = DATA,
     wishlist = WISHLIST,
+    quotes = QUOTES,
     # Values common to several tabs
     genre = "All",
     # Dashboard values
@@ -57,7 +59,10 @@ server <- function(input, output, session) {
     binSizeYear = "50 years",
     binSizePages = "50 pages",
     # Wishlist
-    state = "All"
+    state = "All",
+    # Quotes
+    theme = "All",
+    rank = "All"
   )
 
   # Server functions
@@ -67,6 +72,7 @@ server <- function(input, output, session) {
   achievmentsServer("achievments", values)
   recordServer("record", values)
   wishlistServer("wishlist", values)
+  quotesServer("quotes", values)
 }
 
 
@@ -96,7 +102,9 @@ ui <- dashboardPage(
       menuItem(h2("Record"), tabName = "record",
                icon = icon("list-ul", class = "fa")),
       menuItem(h2("Wish List"), tabName = "wishlist",
-               icon = icon("clipboard-list", class = "fa"))
+               icon = icon("clipboard-list", class = "fa")),
+      menuItem(h2("Quotes"), tabName = "quotes",
+               icon = icon("quote-left", class = "fa"))
     )
   ),
 
@@ -125,7 +133,8 @@ ui <- dashboardPage(
       tabItem(tabName = "authors", fluidPage(authorsUi("authors"))),
       tabItem(tabName = "achievments", fluidPage(achievmentsUi("achievments"))),
       tabItem(tabName = "record", fluidPage(recordUi("record"))),
-      tabItem(tabName = "wishlist", fluidPage(wishlistUi("wishlist")))
+      tabItem(tabName = "wishlist", fluidPage(wishlistUi("wishlist"))),
+      tabItem(tabName = "quotes", fluidPage(quotesUi("quotes")))
     )
   )
 )
