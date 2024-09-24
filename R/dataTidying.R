@@ -213,3 +213,40 @@ tidyWishlist <- function(wishlist) {
     )
 
   }
+
+
+tidyQuotes <- function(quotes) {
+  quotes <- quotes[, c(1, 4, 6, 7)]
+  colnames(quotes) <- c("Author", "Theme", "Ranking", "Quote")
+
+  quotes$Theme <- as.character(relevel_factor(quotes$Theme, new.levels = list(
+    "Amour" = "Love",
+    "Anarchisme" = "Politics",
+    "Art" = "Art",
+    "Economie" = "Economy",
+    "Histoire" = "History",
+    "Humain" = "Humanity",
+    "Humour" = "Humor",
+    "Justice & Politique" = "Politics",
+    "Maths & Stats" = "Science",
+    "Morale & Ethique" = "Ethics",
+    "Musique" = "Art",
+    "Philosophie" = "Philosophy",
+    "Politique" = "Politics",
+    "Prose" = "Prose",
+    "Prose (poésie)" = "Prose",
+    "Psychologie" = "Psychology",
+    "Religion" = "Religion",
+    "Solitude" = "Loneliness",
+    "Temps" = "Humanity",
+    "Vie & Mort" = "Life & Death"
+  )))
+
+  quotes$Ranking <- as.character(relevel_factor(quotes$Ranking, new.levels = list(
+    "o" = "O",
+    "O" = "O",
+    "0" = "O",
+    "x" = "X",
+    "X" = "X"
+  )))
+}
