@@ -18,7 +18,7 @@ library(gridExtra)
 library(forcats)
 library(lazyMe)
 library(DT)
-
+library(shinyalert)
 
 # Sourcing R/ folder functions
 # Not required if App is launched through to "Run App" button
@@ -82,6 +82,7 @@ server <- function(input, output, session) {
 
 # Define UI for application
 ui <- dashboardPage(
+
   # Header
   dashboardHeader(
     title = "bookwoRm"

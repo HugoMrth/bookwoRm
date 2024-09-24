@@ -249,4 +249,6 @@ tidyQuotes <- function(quotes) {
     "x" = "X",
     "X" = "X"
   )))
+
+  quotes
 }
