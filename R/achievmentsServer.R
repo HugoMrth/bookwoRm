@@ -59,6 +59,11 @@ achievmentsServer <- function(id, values) {
         paste(sum(!is.na(values$data$BI)), "out of 100")
       })
 
+      # NF
+      output$nChecksNF <- renderText({
+        paste(sum(!is.na(values$data$NF)), "out of 100")
+      })
+
 
       #### Recap text ####
       output$recapText <- renderUI({

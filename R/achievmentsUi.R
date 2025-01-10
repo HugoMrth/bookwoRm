@@ -17,17 +17,21 @@ achievmentsUi <- function(id) {
           )
         ),
         fluidRow(
-          column(width = 4,box(
+          column(width = 3,box(
             title = h1("GoodReads.com"), width = NULL, solidHeader = TRUE, status = "warning",
             h3(textOutput(ns("nChecksGR"))))
           ),
-          column(width = 4,box(
+          column(width = 3,box(
             title = h1("Big Read"), width = NULL, solidHeader = TRUE, status = "warning",
             h3(textOutput(ns("nChecksBR"))))
           ),
-          column(width = 4,
-                 box(title = h1("Bibliothèque Idéale"), width = NULL, solidHeader = TRUE, status = "success",
-                     h3(textOutput(ns("nChecksBI"))))
+          column(width = 3, box(
+            title = h1("Bibliothèque Idéale"), width = NULL, solidHeader = TRUE, status = "success",
+            h3(textOutput(ns("nChecksBI"))))
+          ),
+          column(width = 3, box(
+            title = h1("BBC Non Fiction"), width = NULL, solidHeader = TRUE, status = "success",
+            h3(textOutput(ns("nChecksNF"))))
           )
         ),
         # Recap text

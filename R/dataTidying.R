@@ -4,7 +4,7 @@ tidyBooks <- function(data) {
   colnames(data) <- c("id", "readDate", "theme", "formatl", "origin_niv1",
                        "title", "author", "pubDate",
                        "genre_niv1", "genre_niv2", "genre_niv3", "n_pages", "lang",
-                       "CNL", "ML", "MF", "GR", "BR", "BI", "prix",
+                       "CNL", "ML", "MF", "GR", "BR", "BI", "NF", "prix",
                        "note", "genre_detail", "comm")
 
   data <- data %>%
@@ -216,7 +216,7 @@ tidyWishlist <- function(wishlist) {
 
 
 tidyQuotes <- function(quotes) {
-  quotes <- quotes[, c(1, 4, 6, 7)]
+  quotes <- quotes[, c(1, 3, 5, 6)]
   colnames(quotes) <- c("Author", "Theme", "Ranking", "Quote")
 
   quotes$Theme <- as.character(relevel_factor(quotes$Theme, new.levels = list(
