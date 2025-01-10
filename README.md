@@ -28,7 +28,7 @@ install.packages("DT")
 
 
 ### Installing package from github
-remotes::install_github("HugoMrth/lazyMe")
+devtools::install_github("HugoMrth/lazyMe")
 ```
 
 ## 2) Lauching the app
