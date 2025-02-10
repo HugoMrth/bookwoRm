@@ -51,6 +51,11 @@ dashboardUi <- function(id) {
       column(width = 6,
              plotOutput(ns("pieLangFormat"))
       )
+    ),
+    fluidRow(
+      column(width = 12,
+             plotOutput(ns("wordcloud"))
+      )
     )
   )
 }

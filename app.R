@@ -11,6 +11,13 @@ library(shinyjs)
 library(shinybusy)
 library(shinyBS)
 
+# Word cloud
+library(polyglotr)
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(RColorBrewer)
+
 # Other packages
 library(tidyverse)
 library(stringr)
