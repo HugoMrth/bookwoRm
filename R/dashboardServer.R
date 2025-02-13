@@ -205,8 +205,8 @@ dashboardServer <- function(id, values) {
 
       #### __ Wordcloud ####
       output$wordcloud <- renderPlot({
-        titlesFR <- DATA$title[DATA$lang == "French"]
-        titlesEN <- DATA$title[DATA$lang == "English"]
+        titlesFR <- values$data$title[values$data$lang == "French"]
+        titlesEN <- values$data$title[values$data$lang == "English"]
         titles <- c(titlesEN, sapply(titlesFR[1:62], google_translate, target_language = "en", source_language = "fr"))
 
         test <- paste(titles, collapse = " ")

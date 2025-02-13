@@ -3,29 +3,29 @@
 #### IMPORTS ####
 
 # Shiny packages
-library(shiny)
-library(shinydashboard)
-library(shinyFiles)
-library(shinyWidgets)
-library(shinyjs)
-library(shinybusy)
-library(shinyBS)
+if (!require("shiny")) install.packages("shiny")
+if (!require("shinydashboard")) install.packages("shinydashboard")
+if (!require("shinyFiles")) install.packages("shinyFiles")
+if (!require("shinyWidgets")) install.packages("shinyWidgets")
+if (!require("shinyjs")) install.packages("shinyjs")
+if (!require("shinybusy")) install.packages("shinybusy")
+if (!require("shinyBS")) install.packages("shinyBS")
+if (!require("shinyalert")) install.packages("shinyalert")
 
 # Word cloud
-library(polyglotr)
-library(tm)
-library(SnowballC)
-library(wordcloud)
-library(RColorBrewer)
+if (!require("polyglotr")) install.packages("polyglotr")
+if (!require("tm")) install.packages("tm")
+if (!require("SnowballC")) install.packages("SnowballC")
+if (!require("wordcloud")) install.packages("wordcloud")
+if (!require("RColorBrewer")) install.packages("RColorBrewer")
 
 # Other packages
-library(tidyverse)
-library(stringr)
-library(gridExtra)
-library(forcats)
-library(lazyMe)
-library(DT)
-library(shinyalert)
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("stringr")) install.packages("stringr")
+if (!require("gridExtra")) install.packages("gridExtra")
+if (!require("forcats")) install.packages("forcats")
+if (!require("lazyMe")) install.packages("lazyMe")
+if (!require("DT")) install.packages("DT")
 
 # Sourcing R/ folder functions
 # Not required if App is launched through to "Run App" button
